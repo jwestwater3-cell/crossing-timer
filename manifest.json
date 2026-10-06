@@ -1,0 +1,15 @@
+{
+  "name": "Crossing Timer · 南百合丘小南側",
+  "short_name": "Crossing",
+  "description": "Time your walk to the Minamiyurigaoka Elem. School S. crossing so you arrive just before the walk signal.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111418",
+  "theme_color": "#111418",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

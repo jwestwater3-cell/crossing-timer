@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Crossing">
+<title>Crossing Timer · 南百合丘小南側</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root {
+    --bg: #111418; --card: #1b2027; --card2: #232a33; --text: #eef1f5; --muted: #9aa5b1;
+    --line: #2e3640; --accent: #4da3ff;
+    --green: #0f8a45; --green-bg: #06301a;
+    --yellow: #e0a800; --yellow-bg: #3a2c00;
+    --red: #c62828; --red-bg: #3a0d0d;
+    --phase: var(--red); --phase-bg: var(--red-bg); --phase-text: #fff;
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f3f5f8; --card: #ffffff; --card2: #eef1f5; --text: #12161b; --muted: #5b6672; --line: #d9dee5;
+            --green-bg: #d8f3e3; --yellow-bg: #fff1c2; --red-bg: #fbdcdc; }
+  }
+  body.phase-green  { --phase: var(--green);  --phase-bg: var(--green-bg);  --phase-text: #fff; }
+  body.phase-yellow { --phase: var(--yellow); --phase-bg: var(--yellow-bg); --phase-text: #1a1400; }
+  body.phase-red    { --phase: var(--red);    --phase-bg: var(--red-bg);    --phase-text: #fff; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background: var(--phase-bg); color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Segoe UI", Roboto, sans-serif;
+    padding: calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 24px);
+    transition: background-color .4s ease;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px; }
+  header h1 { font-size: 17px; margin: 0; font-weight: 700; }
+  header .jp { font-size: 12px; color: var(--muted); }
+  header .clock { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; white-space: nowrap; }
+
+  .hero { background: var(--phase); color: var(--phase-text); border-radius: var(--radius); padding: 16px 18px 14px;
+          transition: background-color .4s ease; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+  .hero .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .phase-name { font-size: 54px; font-weight: 900; letter-spacing: 1px; line-height: 1; }
+  .phase-sub { font-size: 15px; opacity: .92; margin-top: 4px; }
+  .big-count { text-align: right; }
+  .big-count .num { font-size: 64px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big-count .lbl { font-size: 13px; opacity: .9; }
+  .next-green { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.28);
+                display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; }
+  body.phase-yellow .next-green { border-top-color: rgba(0,0,0,.25); }
+  .next-green b { font-size: 26px; font-variant-numeric: tabular-nums; }
+  .bar { position: relative; height: 10px; border-radius: 6px; margin-top: 12px; overflow: hidden; display: flex;
+         background: rgba(0,0,0,.25); }
+  .bar span { display: block; height: 100%; }
+  .bar .g { background: #39d17a; } .bar .y { background: #ffd23f; } .bar .r { background: #ff6b6b; }
+  .bar .cursor { position: absolute; top: -2px; bottom: -2px; width: 3px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.5); border-radius: 2px; }
+
+  .card { background: var(--card); border-radius: var(--radius); padding: 14px 16px; border: 1px solid var(--line); }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 700; }
+
+  .leave { text-align: center; padding: 6px 0 4px; }
+  .leave .title { font-size: 15px; color: var(--muted); }
+  .leave .value { font-size: 52px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .leave.go .value { color: #39d17a; }
+  .leave .detail { font-size: 14px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .ifnow { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--card2); font-size: 15px; }
+  .ifnow .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+  .settings { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+  .setting { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .setting label { font-size: 15px; }
+  .setting small { display: block; color: var(--muted); font-size: 12px; }
+  .stepper { display: flex; align-items: center; gap: 6px; }
+  .stepper .val { min-width: 64px; text-align: center; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  button { font: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
+  .sbtn { width: 48px; height: 48px; border-radius: 14px; background: var(--card2); font-size: 18px; font-weight: 700; border: 1px solid var(--line); }
+  .sbtn:active, .btn:active { transform: scale(.97); }
+  .btn { width: 100%; min-height: 56px; border-radius: 16px; font-size: 18px; font-weight: 700; background: var(--card2); border: 1px solid var(--line); padding: 10px 14px; }
+  .btn.primary { background: #2e7d32; color: #fff; border-color: transparent; min-height: 72px; font-size: 20px; }
+  .btn.small { min-height: 48px; font-size: 15px; font-weight: 600; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .toggle { display: flex; align-items: center; justify-content: space-between; min-height: 52px; }
+  .switch { position: relative; width: 58px; height: 34px; flex: none; }
+  .switch input { opacity: 0; width: 100%; height: 100%; position: absolute; margin: 0; z-index: 1; cursor: pointer; }
+  .switch .track { position: absolute; inset: 0; background: var(--line); border-radius: 20px; transition: .2s; }
+  .switch .track::after { content: ""; position: absolute; left: 3px; top: 3px; width: 28px; height: 28px; border-radius: 50%; background: #fff; transition: .2s; }
+  .switch input:checked + .track { background: #34c759; }
+  .switch input:checked + .track::after { transform: translateX(24px); }
+  .note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .note.warn { color: #ffb74d; }
+  @media (prefers-color-scheme: light) { .note.warn { color: #a15c00; } }
+  .info dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+  .info dt { color: var(--muted); } .info dd { margin: 0; font-variant-numeric: tabular-nums; }
+  details summary { cursor: pointer; font-weight: 600; min-height: 32px; list-style-position: inside; }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 18px); transform: translateX(-50%);
+           background: #000c; color: #fff; padding: 10px 14px; border-radius: 14px; font-size: 15px; display: none; gap: 12px; align-items: center; z-index: 10; }
+  .toast button { background: #fff2; padding: 8px 12px; border-radius: 10px; font-weight: 700; }
+  .flash { animation: flash 1s ease 3; }
+  @keyframes flash { 50% { filter: brightness(1.6); } }
+</style>
+</head>
+<body class="phase-red">
+<main>
+  <header>
+    <div><h1>Crossing Timer</h1><div class="jp">南百合丘小南側 · Minamiyurigaoka Elem. S. (Kiumi)</div></div>
+    <div class="clock" id="clock">--:--:--</div>
+  </header>
+
+  <!-- 1. Live phase -->
+  <section class="hero" id="hero" aria-live="polite">
+    <div class="row">
+      <div>
+        <div class="phase-name" id="phaseName">RED</div>
+        <div class="phase-sub" id="phaseSub">Projected from last sync</div>
+      </div>
+      <div class="big-count">
+        <div class="num" id="changeNum">--</div>
+        <div class="lbl" id="changeLbl">s to change</div>
+      </div>
+    </div>
+    <div class="next-green"><span id="nextGreenLbl">Next walk (green) in</span><b id="nextGreenNum">-- s</b></div>
+    <div class="bar" id="bar" aria-hidden="true">
+      <span class="g" id="barG"></span><span class="y" id="barY"></span><span class="r" id="barR"></span>
+      <div class="cursor" id="barCursor"></div>
+    </div>
+  </section>
+
+  <!-- 2. Leave planner -->
+  <section class="card" id="planCard">
+    <h2>Leave home</h2>
+    <div class="leave" id="leaveBox">
+      <div class="title" id="leaveTitle">Leave in</div>
+      <div class="value" id="leaveValue">--</div>
+      <div class="detail" id="leaveDetail"></div>
+    </div>
+    <div class="ifnow" id="ifNow">If you leave now…</div>
+    <div class="settings">
+      <div class="setting">
+        <label>Walk home → crossing<small>min : sec (saved)</small></label>
+        <div class="stepper">
+          <button class="sbtn" data-walk="-10" aria-label="10 seconds less">−</button>
+          <div class="val" id="walkVal">5:00</div>
+          <button class="sbtn" data-walk="10" aria-label="10 seconds more">+</button>
+        </div>
+      </div>
+      <div class="setting">
+        <label>Arrive before green<small>seconds of waiting you want</small></label>
+        <div class="stepper">
+          <button class="sbtn" data-off="-1" aria-label="1 second less">−</button>
+          <div class="val" id="offVal">8 s</div>
+          <button class="sbtn" data-off="1" aria-label="1 second more">+</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn small" data-walk="-60">−1 min</button>
+        <button class="btn small" data-walk="60">+1 min</button>
+        <button class="btn small" id="walkEdit">Type…</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Alerts -->
+  <section class="card">
+    <h2>Alerts</h2>
+    <div class="toggle"><label for="alertToggle">Beep / vibrate when it's time to leave</label>
+      <span class="switch"><input type="checkbox" id="alertToggle"><span class="track"></span></span></div>
+    <div class="toggle"><label for="wakeToggle">Keep screen awake</label>
+      <span class="switch"><input type="checkbox" id="wakeToggle"><span class="track"></span></span></div>
+    <div class="btn-row"><button class="btn small" id="testAlert">Test beep</button></div>
+    <p class="note" id="alertNote">iPhone Safari can't vibrate, so the alert is a beep plus a screen flash. Keep this page open and the screen on (mute switch may silence the beep).</p>
+  </section>
+
+  <!-- 4. Sync -->
+  <section class="card">
+    <h2>Sync</h2>
+    <button class="btn primary" id="syncBtn">🚶 Walk light just turned green</button>
+    <div class="btn-row">
+      <button class="btn small" data-nudge="-1" aria-label="Shift predictions 1 second earlier">−1 s</button>
+      <button class="btn small" data-nudge="1" aria-label="Shift predictions 1 second later">+1 s</button>
+      <button class="btn small" id="resetBtn">Reset</button>
+    </div>
+    <p class="note">Tap the big button the moment the walk light turns green. −1 s / +1 s nudge the prediction if it's consistently early or late; Reset restores the measured default.</p>
+    <p class="note" id="anchorInfo"></p>
+    <p class="note" id="reliability"></p>
+  </section>
+
+  <!-- 5. Info -->
+  <section class="card info">
+    <details>
+      <summary>Signal timings used</summary>
+      <dl style="margin-top:10px">
+        <dt>Cycle</dt><dd>110 s (green → green; 110.23 s measured, used internally)</dd>
+        <dt>Green</dt><dd>22 s (two greens measured 21.97 s)</dd>
+        <dt>Yellow</dt><dd>3 s</dd>
+        <dt>Red</dt><dd>85 s</dd>
+        <dt>Walk signal</dt><dd>Starts with car green, ≈ 22 s to cross</dd>
+        <dt>Safe margin</dt><dd>20 s of walk time needed, otherwise wait for the next cycle</dd>
+        <dt>Default anchor</dt><dd>Green start 2026-10-06 11:00:04.9 JST (next green seen 11:01:55.1)</dd>
+        <dt>Clock accuracy</dt><dd>about ±1 s</dd>
+        <dt>Measured</dt><dd>One cycle, ≈ 11:00 on a Tuesday. Other times of day may run a different plan.</dd>
+      </dl>
+    </details>
+  </section>
+</main>
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+
+<script id="tl-logic">
+/* Pure timing logic (no DOM). Also loaded by the Node test script. */
+var TL = (function () {
+  var CYCLE_S = 110.23;            // measured green→green; displayed as "110 s"
+  var GREEN_S = 22;                // 21.97 s measured
+  var YELLOW_S = 3;
+  var RED_S = CYCLE_S - GREEN_S - YELLOW_S; // 85.23 (displayed as 85)
+  var SAFE_S = 20;                 // usable walk time needed
+  var DEFAULT_ANCHOR_MS = Date.UTC(2026, 9, 6, 2, 0, 4, 900); // 2026-10-06 11:00:04.9 JST
+
+  function mod(a, n) { return ((a % n) + n) % n; }
+  function cyclePos(tMs, anchorMs) { return mod((tMs - anchorMs) / 1000, CYCLE_S); }
+
+  function phaseAt(tMs, anchorMs) {
+    var pos = cyclePos(tMs, anchorMs), phase, toChange;
+    if (pos < GREEN_S) { phase = 'green'; toChange = GREEN_S - pos; }
+    else if (pos < GREEN_S + YELLOW_S) { phase = 'yellow'; toChange = GREEN_S + YELLOW_S - pos; }
+    else { phase = 'red'; toChange = CYCLE_S - pos; }
+    return {
+      pos: pos, phase: phase, toChange: toChange,
+      toNextGreen: CYCLE_S - pos,                       // start of the NEXT green (after the current one if green)
+      greenLeft: phase === 'green' ? GREEN_S - pos : 0,
+      cycles: (tMs - anchorMs) / 1000 / CYCLE_S
+    };
+  }
+
+  /* walkS: home→crossing seconds; offsetS: desired arrival this many s before green. */
+  function plan(nowMs, anchorMs, walkS, offsetS, safeS) {
+    if (safeS == null) safeS = SAFE_S;
+    offsetS = Math.max(0, Math.min(60, offsetS));
+    var arrNowMs = nowMs + walkS * 1000;
+    var a = phaseAt(arrNowMs, anchorMs);
+    var ifNow;
+    if (a.phase === 'green') ifNow = { kind: a.greenLeft >= safeS ? 'green-ok' : 'green-short', greenLeft: a.greenLeft, wait: a.greenLeft >= safeS ? 0 : a.toNextGreen };
+    else ifNow = { kind: a.phase, wait: a.toNextGreen };
+
+    var winStart = CYCLE_S - offsetS;   // arrival position at which you should leave
+    var winEnd = GREEN_S - safeS;       // last arrival position that still leaves safeS of walk
+    var p = a.pos, leaveIn, windowLeft = 0, targetGreenMs, inWindow;
+    if (p >= winStart || p <= winEnd) {
+      inWindow = true; leaveIn = 0;
+      if (p >= winStart) { windowLeft = (CYCLE_S - p) + winEnd; targetGreenMs = arrNowMs + (CYCLE_S - p) * 1000; }
+      else { windowLeft = winEnd - p; targetGreenMs = arrNowMs - p * 1000; }
+    } else {
+      inWindow = false; leaveIn = winStart - p;
+      targetGreenMs = arrNowMs + (CYCLE_S - p) * 1000;
+    }
+    var leaveAtMs = nowMs + leaveIn * 1000;
+    return {
+      inWindow: inWindow, leaveIn: leaveIn, windowLeft: windowLeft,
+      leaveAtMs: leaveAtMs, arriveAtMs: leaveAtMs + walkS * 1000, targetGreenMs: targetGreenMs,
+      waitAtCrossing: (targetGreenMs - (leaveAtMs + walkS * 1000)) / 1000,
+      ifNow: ifNow, arrivalPhase: a
+    };
+  }
+
+  return { CYCLE_S: CYCLE_S, GREEN_S: GREEN_S, YELLOW_S: YELLOW_S, RED_S: RED_S, SAFE_S: SAFE_S,
+           DEFAULT_ANCHOR_MS: DEFAULT_ANCHOR_MS, mod: mod, cyclePos: cyclePos, phaseAt: phaseAt, plan: plan };
+})();
+if (typeof module !== 'undefined') module.exports = TL;
+</script>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var LS = window.localStorage;
+  function lsGet(k, d) { try { var v = LS.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+  function lsSet(k, v) { try { LS.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  var state = {
+    anchorMs: lsGet('ct.anchorMs', TL.DEFAULT_ANCHOR_MS),
+    anchorSetAt: lsGet('ct.anchorSetAt', null),     // null = default anchor
+    walkS: lsGet('ct.walkS', 300),
+    offsetS: lsGet('ct.offsetS', 8),
+    alerts: lsGet('ct.alerts', false),
+    wake: lsGet('ct.wake', false)
+  };
+  var undoAnchor = null, lastAlertKey = lsGet('ct.lastAlertKey', null), wasInWindow = null;
+
+  var tfmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  var dfmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tokyo', weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  function hhmmss(ms) { return tfmt.format(new Date(ms)); }
+  function mmss(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function secs(s) { return String(Math.max(0, Math.ceil(s - 1e-9))); }
+  function ago(ms) {
+    var s = Math.round(ms / 1000);
+    if (s < 60) return s + ' s ago';
+    if (s < 3600) return Math.round(s / 60) + ' min ago';
+    if (s < 86400) return (s / 3600).toFixed(1) + ' h ago';
+    return Math.round(s / 86400) + ' days ago';
+  }
+
+  // Cycle bar proportions
+  $('barG').style.width = (TL.GREEN_S / TL.CYCLE_S * 100) + '%';
+  $('barY').style.width = (TL.YELLOW_S / TL.CYCLE_S * 100) + '%';
+  $('barR').style.width = (TL.RED_S / TL.CYCLE_S * 100) + '%';
+
+  function renderSettings() {
+    $('walkVal').textContent = mmss(state.walkS);
+    $('offVal').textContent = state.offsetS + ' s';
+    $('alertToggle').checked = state.alerts;
+    $('wakeToggle').checked = state.wake;
+  }
+
+  function renderAnchor(now) {
+    var age = now - state.anchorMs;
+    $('anchorInfo').textContent = (state.anchorSetAt ? 'Last synced ' : 'Using default anchor (measured) · green at ')
+      + dfmt.format(new Date(state.anchorMs)) + '.' + Math.floor((state.anchorMs % 1000) / 100) + ' JST (' + ago(age) + ').';
+    var cycles = Math.abs(age) / 1000 / TL.CYCLE_S;
+    var drift = Math.max(1, cycles * 0.05);  // ±1 s clock + a 0.05 s/cycle uncertainty in the measured cycle
+    var hourJst = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tokyo', hour: '2-digit', hour12: false }).format(new Date(now)));
+    var msg, warn = false;
+    if (age < 15 * 60e3) msg = 'Fresh sync — predictions should be within a second or two.';
+    else if (age < 3600e3) msg = 'Predictions drift slowly; could be off by ~±' + Math.round(drift) + ' s by now.';
+    else if (age < 6 * 3600e3) { msg = 'It\u2019s been a while (≈' + Math.round(cycles) + ' cycles). Could be off by ±' + Math.round(drift) + ' s or more — tap Sync next time you see the light turn green.'; warn = true; }
+    else { msg = 'Stale: the last sync was ' + ago(age) + '. Treat predictions as rough until you sync again.'; warn = true; }
+    var tod = (hourJst < 10 || hourJst >= 13)
+      ? ' Only one cycle was measured (≈11:00 on a Tuesday); right now the signal may be running a different plan (e.g. rush hour or night), so sync on the spot if it looks off.'
+      : ' Only one cycle was measured (≈11:00 on a Tuesday); other times of day may use a different plan.';
+    if (hourJst < 10 || hourJst >= 13) warn = true;
+    $('reliability').textContent = msg + tod;
+    $('reliability').className = 'note' + (warn ? ' warn' : '');
+  }
+
+  // ---------- Audio / vibration ----------
+  var actx = null;
+  function unlockAudio() {
+    try {
+      if (!actx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); }
+      if (actx && actx.state === 'suspended') actx.resume();
+      if (actx) { var b = actx.createBuffer(1, 1, 22050), s = actx.createBufferSource(); s.buffer = b; s.connect(actx.destination); s.start(0); }
+    } catch (e) {}
+  }
+  function beep() {
+    if (!actx) return;
+    try {
+      if (actx.state === 'suspended') actx.resume();
+      var t0 = actx.currentTime + 0.02;
+      [0, 0.25, 0.5].forEach(function (dt, i) {
+        var o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.value = i === 2 ? 1320 : 880;
+        g.gain.setValueAtTime(0.0001, t0 + dt);
+        g.gain.exponentialRampToValueAtTime(0.5, t0 + dt + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.18);
+        o.connect(g); g.connect(actx.destination); o.start(t0 + dt); o.stop(t0 + dt + 0.2);
+      });
+    } catch (e) {}
+  }
+  function fireAlert() {
+    beep();
+    if (navigator.vibrate) { try { navigator.vibrate([300, 150, 300, 150, 500]); } catch (e) {} }
+    var lb = $('leaveBox'); lb.classList.remove('flash'); void lb.offsetWidth; lb.classList.add('flash');
+  }
+
+  // ---------- Wake lock ----------
+  var wakeLock = null;
+  function requestWake() {
+    if (!state.wake || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (wl) {
+      wakeLock = wl; wl.addEventListener('release', function () { wakeLock = null; });
+    }).catch(function () {});
+  }
+  function releaseWake() { if (wakeLock) { wakeLock.release().catch(function () {}); wakeLock = null; } }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { requestWake(); tick(); } });
+  if (!('wakeLock' in navigator)) $('alertNote').textContent += ' Wake Lock isn\u2019t supported in this browser — set Auto-Lock longer or keep tapping the screen.';
+
+  // ---------- Main render loop ----------
+  var PHASE_LABEL = { green: 'WALK', yellow: 'YELLOW', red: 'RED' };
+  function tick() {
+    var now = Date.now();
+    var ph = TL.phaseAt(now, state.anchorMs);
+    document.body.className = 'phase-' + ph.phase;
+    $('clock').textContent = hhmmss(now) + ' JST';
+    $('phaseName').textContent = PHASE_LABEL[ph.phase];
+    if (ph.phase === 'green') {
+      $('phaseSub').textContent = ph.greenLeft >= TL.SAFE_S ? 'Walk signal on — safe to start' : 'Walk ending — don\u2019t start';
+      $('changeLbl').textContent = 's of walk left';
+      $('nextGreenLbl').textContent = 'Following green in';
+    } else if (ph.phase === 'yellow') {
+      $('phaseSub').textContent = 'Don\u2019t start crossing';
+      $('changeLbl').textContent = 's to red';
+      $('nextGreenLbl').textContent = 'Next walk (green) in';
+    } else {
+      $('phaseSub').textContent = 'Wait for the walk signal';
+      $('changeLbl').textContent = 's to green';
+      $('nextGreenLbl').textContent = 'Next walk (green) at ' + hhmmss(now + ph.toNextGreen * 1000) + ' · in';
+    }
+    $('changeNum').textContent = secs(ph.toChange);
+    $('nextGreenNum').textContent = secs(ph.toNextGreen) + ' s';
+    $('barCursor').style.left = 'calc(' + (ph.pos / TL.CYCLE_S * 100) + '% - 1px)';
+
+    var pl = TL.plan(now, state.anchorMs, state.walkS, state.offsetS);
+    var lb = $('leaveBox');
+    if (pl.inWindow) {
+      lb.classList.add('go');
+      $('leaveTitle').textContent = 'Time to go';
+      $('leaveValue').textContent = 'LEAVE NOW';
+      var w = pl.ifNow.kind === 'green-ok'
+        ? 'Arrive ' + hhmmss(pl.arriveAtMs) + ' with ' + Math.floor(pl.ifNow.greenLeft) + ' s of walk left'
+        : 'Arrive ' + hhmmss(pl.arriveAtMs) + ', green at ' + hhmmss(pl.targetGreenMs) + ' (wait ' + Math.round(pl.waitAtCrossing) + ' s)';
+      $('leaveDetail').textContent = w + ' · window closes in ' + secs(pl.windowLeft) + ' s';
+    } else {
+      lb.classList.remove('go');
+      $('leaveTitle').textContent = 'Leave in';
+      $('leaveValue').textContent = pl.leaveIn >= 60 ? mmss(Math.ceil(pl.leaveIn)) : secs(pl.leaveIn) + ' s';
+      $('leaveDetail').textContent = 'Leave ' + hhmmss(pl.leaveAtMs) + ' → arrive ' + hhmmss(pl.arriveAtMs) + ' → green ' + hhmmss(pl.targetGreenMs);
+    }
+    var k = pl.ifNow.kind, txt, col;
+    if (k === 'green-ok') { col = '#39d17a'; txt = 'Leave now → arrive during <b>green with ' + Math.floor(pl.ifNow.greenLeft) + ' s left</b> ✓'; }
+    else if (k === 'green-short') { col = '#ffd23f'; txt = 'Leave now → arrive at green with only ' + Math.floor(pl.ifNow.greenLeft) + ' s left — <b>miss</b> (under ' + TL.SAFE_S + ' s); you\u2019d wait ' + Math.ceil(pl.ifNow.wait) + ' s for the next one'; }
+    else { col = k === 'yellow' ? '#ffd23f' : '#ff6b6b'; txt = 'Leave now → arrive during <b>' + (k === 'yellow' ? 'yellow' : 'red') + ', waiting ' + Math.ceil(pl.ifNow.wait) + ' s</b>'; }
+    $('ifNow').innerHTML = '<span class="dot" style="background:' + col + '"></span>' + txt;
+
+    // Alert on the transition into the leave window (once per target green)
+    var key = Math.round(pl.targetGreenMs / 1000);
+    if (pl.inWindow && wasInWindow === false && state.alerts && lastAlertKey !== key) {
+      lastAlertKey = key; lsSet('ct.lastAlertKey', key); fireAlert();
+    }
+    wasInWindow = pl.inWindow;
+
+    if (!tick.n || tick.n++ % 5 === 0) { tick.n = tick.n || 1; renderAnchor(now); }
+  }
+
+  // ---------- Controls ----------
+  function setWalk(s) { state.walkS = Math.max(0, Math.min(3600, s)); lsSet('ct.walkS', state.walkS); wasInWindow = null; renderSettings(); tick(); }
+  function setOff(s) { state.offsetS = Math.max(0, Math.min(30, s)); lsSet('ct.offsetS', state.offsetS); wasInWindow = null; renderSettings(); tick(); }
+  function setAnchor(ms, setAt, toastMsg) {
+    undoAnchor = { anchorMs: state.anchorMs, anchorSetAt: state.anchorSetAt };
+    state.anchorMs = ms; state.anchorSetAt = setAt;
+    lsSet('ct.anchorMs', ms); lsSet('ct.anchorSetAt', setAt);
+    wasInWindow = null; tick(); renderAnchor(Date.now());
+    showToast(toastMsg);
+  }
+  var toastTimer;
+  function showToast(msg) {
+    $('toastMsg').textContent = msg; $('toast').style.display = 'flex';
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').style.display = 'none'; }, 6000);
+  }
+  $('toastUndo').addEventListener('click', function () {
+    if (!undoAnchor) return;
+    var u = undoAnchor; undoAnchor = null;
+    state.anchorMs = u.anchorMs; state.anchorSetAt = u.anchorSetAt;
+    lsSet('ct.anchorMs', u.anchorMs); lsSet('ct.anchorSetAt', u.anchorSetAt);
+    $('toast').style.display = 'none'; wasInWindow = null; tick(); renderAnchor(Date.now());
+  });
+
+  document.querySelectorAll('[data-walk]').forEach(function (b) { b.addEventListener('click', function () { setWalk(state.walkS + Number(b.dataset.walk)); }); });
+  document.querySelectorAll('[data-off]').forEach(function (b) { b.addEventListener('click', function () { setOff(state.offsetS + Number(b.dataset.off)); }); });
+  $('walkEdit').addEventListener('click', function () {
+    var v = prompt('Walking time from home to the crossing (m:ss)', mmss(state.walkS));
+    if (v == null) return;
+    var m = String(v).trim().match(/^(\d+)(?::(\d{1,2}))?$/);
+    if (!m) { alert('Please enter minutes:seconds, e.g. 5:30'); return; }
+    setWalk(m[2] != null ? Number(m[1]) * 60 + Number(m[2]) : Number(m[1]) * 60);
+  });
+  $('syncBtn').addEventListener('click', function () {
+    var now = Date.now(); unlockAudio();
+    setAnchor(now, now, 'Synced to ' + hhmmss(now) + '.');
+  });
+  document.querySelectorAll('[data-nudge]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var d = Number(b.dataset.nudge);
+      setAnchor(state.anchorMs + d * 1000, state.anchorSetAt || Date.now(), 'Shifted predictions ' + (d > 0 ? 'later' : 'earlier') + ' by 1 s.');
+    });
+  });
+  $('resetBtn').addEventListener('click', function () {
+    if (!confirm('Reset to the default measured anchor (11:00:04.9 JST, 6 Oct 2026)?')) return;
+    setAnchor(TL.DEFAULT_ANCHOR_MS, null, 'Reset to default anchor.');
+  });
+  $('alertToggle').addEventListener('change', function (e) {
+    state.alerts = e.target.checked; lsSet('ct.alerts', state.alerts);
+    if (state.alerts) unlockAudio();
+  });
+  $('wakeToggle').addEventListener('change', function (e) {
+    state.wake = e.target.checked; lsSet('ct.wake', state.wake);
+    if (state.wake) requestWake(); else releaseWake();
+  });
+  $('testAlert').addEventListener('click', function () { unlockAudio(); setTimeout(fireAlert, 50); });
+  // iOS needs a user gesture before audio can play; any first tap unlocks it if alerts are on.
+  document.addEventListener('touchend', function once() { if (state.alerts) unlockAudio(); document.removeEventListener('touchend', once); }, { passive: true });
+  document.addEventListener('click', function once() { if (state.alerts || state.wake) { unlockAudio(); requestWake(); } document.removeEventListener('click', once); });
+
+  renderSettings();
+  tick();
+  setInterval(tick, 200);
+  requestWake();
+})();
+</script>
+</body>
+</html>
